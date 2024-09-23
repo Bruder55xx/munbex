@@ -12,7 +12,15 @@ from loguru import logger
 from flask import Flask
 import time
 import json
+# Flask application
+app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return "Hello World!"
+
+def run_flask():
+    app.run(debug=True)
 
 class Moonbix:
     def __init__(self):
@@ -73,6 +81,7 @@ class Moonbix:
 if __name__ == "__main__":
     try:
         moonbix = Moonbix()
+        keep_alive()
         moonbix.main()
     except KeyboardInterrupt:
         sys.exit()
