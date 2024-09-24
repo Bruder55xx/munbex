@@ -1,9 +1,11 @@
 import requests
 import time
+import threading
 
-from smart_airdrop_claimer import base
+from orrnob_drops_automation import base
 from core.headers import headers
 from core.info import get_info
+from core.combination import get_game_data
 
 
 def start_game(token, proxies=None):
@@ -20,27 +22,9 @@ def start_game(token, proxies=None):
         )
         data = response.json()
         return data
-    except:
+    except Exception as e:
+        base.log(f"{base.white}Error starting game: {e}")
         return None
-
-
-def play_game(start_game_data, proxies=None):
-    url = "https://moonbix-server-9r08ifrt4-scriptvips-projects.vercel.app/moonbix/api/v1/play"
-    payload = {"game_response": start_game_data}
-
-    try:
-        response = requests.get(
-            url=url,
-            json=payload,
-            proxies=proxies,
-            timeout=20,
-        )
-        data = response.json()
-        payload = data["game"]["payload"]
-        point = data["game"]["log"]
-        return payload, point
-    except:
-        return None, None
 
 
 def complete_game(token, payload, point, proxies=None):
@@ -62,27 +46,49 @@ def complete_game(token, payload, point, proxies=None):
         data = response.json()
         status = data["success"]
         return status
-    except:
+    except Exception as e:
+        base.log(f"{base.white}Error completing game: {e}")
         return None
+
+
+def loading_animation(seconds):
+    animation = "|/-\\"
+    for i in range(seconds):
+        print(f"\r{base.yellow}Playing... {animation[i % len(animation)]}", end="")
+        time.sleep(1)
+    print()  # Move to the next line after loading
 
 
 def process_play_game(token, proxies=None):
     while True:
         start_game_data = start_game(token=token, proxies=proxies)
-        start_game_code = start_game_data["code"]
+        
+        if start_game_data is None:
+            base.log(f"{base.white}Auto Play Game: {base.red}Failed to start the game")
+            break
+
+        start_game_code = start_game_data.get("code")
 
         if start_game_code == "000000":
-            payload, point = play_game(start_game_data=start_game_data, proxies=proxies)
+            payload, point = get_game_data(game_response=start_game_data)
             if payload:
                 base.log(f"{base.yellow}Playing for 45 seconds...")
-                time.sleep(45)
+
+                # Create and start the loading animation thread
+                loading_thread = threading.Thread(target=loading_animation, args=(45,))
+                loading_thread.start()
+
+                # Wait for the game to be played
+                time.sleep(45)  # Simulating game play time
+                
+                # Wait for the loading animation to finish
+                loading_thread.join()
+
                 complete_game_status = complete_game(
                     token=token, payload=payload, point=point, proxies=proxies
                 )
                 if complete_game_status:
-                    base.log(
-                        f"{base.white}Auto Play Game: {base.green}Success | Added {point} points"
-                    )
+                    base.log(f"{base.white}Auto Play Game: {base.green}Success")
                     get_info(token=token, proxies=proxies)
                     time.sleep(1)
                 else:
@@ -92,9 +98,9 @@ def process_play_game(token, proxies=None):
                 base.log(f"{base.white}Auto Play Game: {base.red}Fail")
                 break
         elif start_game_code == "116002":
-            base.log(f"{base.white}Auto Play Game: {base.red}No attempt to play")
+            base.log(f"{base.white}Auto Play Game: {base.red}No ticket left to play")
             break
         else:
-            error_message = start_game_data["messageDetail"]
+            error_message = start_game_data.get("messageDetail", "Unknown error")
             base.log(f"{base.white}Auto Play Game: {base.red}Error - {error_message}")
             break

@@ -1,5 +1,4 @@
 import sys
-import time
 
 sys.dont_write_bytecode = True
 
@@ -8,13 +7,15 @@ from core.token import get_token
 from core.info import get_info
 from core.game import process_play_game
 
+import time
+import json
+
 
 class Moonbix:
     def __init__(self):
         # Get file directory
-        self.data_file = base.file_path(file_name="data.txt")
+        self.data_file = base.file_path(file_name="data-proxy.json")
         self.config_file = base.file_path(file_name="config.json")
-        self.proxy_file = base.file_path(file_name="data.proxy.txt")  # Add proxy file path
 
         # Initialize line
         self.line = base.create_line(length=50)
@@ -22,50 +23,47 @@ class Moonbix:
         # Initialize banner
         self.banner = base.create_banner(game_name="Moonbix")
 
-    def display_proxy(self):
-        # Display active proxy details if found
-        try:
-            with open(self.proxy_file, "r") as file:
-                proxy_data = file.read().strip()
-                if proxy_data:
-                    base.log(f"{base.green}Active Proxy: {base.white}{proxy_data}")
-                else:
-                    base.log(f"{base.red}No active proxy found.")
-        except FileNotFoundError:
-            base.log(f"{base.red}Proxy file not found.")
-
     def main(self):
         while True:
             base.clear_terminal()
             print(self.banner)
-
-            # Display proxy details
-            self.display_proxy()
-
-            data = open(self.data_file, "r").read().splitlines()
-            num_acc = len(data)
+            accounts = json.load(open(self.data_file, "r"))["accounts"]
+            num_acc = len(accounts)
             base.log(self.line)
             base.log(f"{base.green}Number of accounts: {base.white}{num_acc}")
 
-            for no, data in enumerate(data):
+            for no, account in enumerate(accounts):
                 base.log(self.line)
                 base.log(f"{base.green}Account number: {base.white}{no+1}/{num_acc}")
+                data = account["acc_info"]
+                proxy_info = account["proxy_info"]
+                parsed_proxy_info = base.parse_proxy_info(proxy_info)
+                if parsed_proxy_info is None:
+                    break
+
+                actual_ip = base.check_ip(proxy_info=proxy_info)
+
+                proxies = base.format_proxy(proxy_info=proxy_info)
 
                 try:
-                    token = get_token(data=data)
+                    token = get_token(data=data, proxies=proxies)
 
                     if token:
-                        get_info(token=token)
-                        process_play_game(token=token)
-                        get_info(token=token)
+
+                        get_info(token=token, proxies=proxies)
+
+                        process_play_game(token=token, proxies=proxies)
+
+                        get_info(token=token, proxies=proxies)
+
                     else:
-                        base.log(f"{base.red}Token Expired! Please get new query id")
+                        base.log(f"{base.red}Token not found! Please get new query id")
                 except Exception as e:
                     base.log(f"{base.red}Error: {base.white}{e}")
 
             print()
             wait_time = 30 * 60
-            base.log(f"{base.yellow}Wait for {int(wait_time / 60)} minutes!")
+            base.log(f"{base.yellow}Wait for {int(wait_time/60)} minutes!")
             time.sleep(wait_time)
 
 

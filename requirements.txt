@@ -1,5 +1,2 @@
-smart-airdrop-claimer
-Flask
-websockets
-loguru
-cloudscraper
+orrnob-drops-automation==0.1.6
+pycryptodome

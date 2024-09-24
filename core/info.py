@@ -1,6 +1,6 @@
 import requests
 
-from smart_airdrop_claimer import base
+from orrnob_drops_automation import base
 from core.headers import headers
 
 
@@ -29,7 +29,7 @@ def get_info(token, proxies=None):
         is_countdown = data["data"]["metaInfo"]["attemptRefreshCountDownTime"]
 
         base.log(
-            f"{base.green}Balance: {base.white}{balance:,} - {base.green}Attempts Left: {base.white}{attempts_left}"
+            f"{base.green}Balance: {base.white}{balance:,} - {base.green}Tickets Left: {base.white}{attempts_left}"
         )
 
         return attempts_left, is_countdown
