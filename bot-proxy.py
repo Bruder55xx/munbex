@@ -22,7 +22,7 @@ def index():
 
 def run_flask():
     app.run(debug=True)
-init(autoreset=True)
+
 
 class Moonbix:
     def __init__(self):
