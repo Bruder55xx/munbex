@@ -9,7 +9,20 @@ from core.game import process_play_game
 
 import time
 import json
+from keep_alive import keep_alive
+import websockets
+from loguru import logger
+from flask import Flask
+# Flask application
+app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return "Hello World!"
+
+def run_flask():
+    app.run(debug=True)
+init(autoreset=True)
 
 class Moonbix:
     def __init__(self):
@@ -70,6 +83,7 @@ class Moonbix:
 if __name__ == "__main__":
     try:
         moonbix = Moonbix()
+        keep_alive()
         moonbix.main()
     except KeyboardInterrupt:
         sys.exit()
