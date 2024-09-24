@@ -1,2 +1,5 @@
 orrnob-drops-automation==0.1.6
 pycryptodome
+Flask
+websockets
+loguru
